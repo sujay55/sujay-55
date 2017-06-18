@@ -1,0 +1,86 @@
+String url="http://download.finance.yahoo.com/d/quotes.csv?s="+stockSymbol+"&f=nsac1p2kjd1t1";
+            new Stock().execute(url);
+
+
+public class Stock extends AsyncTask<String, String, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            HttpURLConnection connection = null;
+            BufferedReader reader = null;
+            try {
+
+                URL url = new URL(params[0]);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.connect();
+                InputStream stream = connection.getInputStream();
+                reader = new BufferedReader(new InputStreamReader(stream));
+                String line = "";
+                StringBuffer buffer = new StringBuffer();
+                while ((line = reader.readLine()) != null) {
+                    buffer.append(line+",");
+                }
+                return buffer.toString();
+            } catch (Exception e) {
+                Toast.makeText(getApplicationContext(),"Error Fetching Stock Quotes",Toast.LENGTH_SHORT).show();
+            } finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
+                try {
+                    if (reader != null) {
+                        reader.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return null;
+        }
+
+
+        @Override
+        protected void onPostExecute(String s) {
+            try {
+                super.onPostExecute(s);
+                s = s.replaceAll("[\"]+", "");
+                //s=s.replaceAll("[,]+"," | ");
+
+                String[] sampleArray = s.split(",");
+                SpannableStringBuilder builder = new SpannableStringBuilder();
+                int arrayCount = sampleArray.length;
+
+                for (int i = 0; i < arrayCount; i = i + 9) {
+                    builder.clear();
+                    String temp1 = "Name : " + sampleArray[i] + "\t\tSymbol :" + sampleArray[i + 1] + "\n\nPrice :" + sampleArray[i + 2] + "\t\tChange : ";
+                    String temp2 = sampleArray[i + 3] + "(" + sampleArray[i + 4] + ")";
+                    String temp3 = "\n\n" + "52 Week High : " + sampleArray[i + 5] + "\t\t" + "52 Week Low : " + sampleArray[i + 6] + "\n\n" + "Date : " + sampleArray[i + 7] + "\t\tTime :" + sampleArray[i + 8];
+
+                    SpannableString spannable = new SpannableString(temp1);
+                    spannable.setSpan(new ForegroundColorSpan(Color.BLACK), 0, temp1.length(), 0);
+
+                    SpannableString spannable3 = new SpannableString(temp3);
+                    spannable3.setSpan(new ForegroundColorSpan(Color.BLACK), 0, temp3.length(), 0);
+
+                    //Object greySpan=new BackgroundColorSpan(Color.GRAY);
+                    //spannable.setSpan(greySpan,0,temp1.length(),0);
+                    builder.append(spannable);
+                    if (temp2.contains("+")) {
+                        SpannableString spannable1 = new SpannableString(temp2);
+                        spannable1.setSpan(new ForegroundColorSpan(Color.rgb(0, 128, 0)), 0, temp2.length(), 0);
+                        spannable1.setSpan(new StyleSpan(Typeface.BOLD), 0, temp2.length(), 0);
+                        //spannable1.setSpan(greySpan,0,temp2.length(),0);
+                        builder.append(spannable1);
+                    } else {
+                        SpannableString spannable1 = new SpannableString(temp2);
+                        spannable1.setSpan(new ForegroundColorSpan(Color.RED), 0, temp2.length(), 0);
+                        spannable1.setSpan(new StyleSpan(Typeface.BOLD), 0, temp2.length(), 0);
+                        //spannable1.setSpan(greySpan,0,temp2.length(),0);
+                        builder.append(spannable1);
+                    }
+                    builder.append(spannable3);
+                    TextView stockDetails = new TextView(getApplicationContext());
+                    stockDetails.setText(builder);
+                    textViews.add(stockDetails);
+
+                }
